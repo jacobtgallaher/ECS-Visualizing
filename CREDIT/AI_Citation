@@ -1,0 +1,190 @@
+CREATING THE ENVIRONMENT FOR MY PROJECT (CONTAINING THE PACKAGES pandas, matplotlib.pyplot, cartopy, seaborn, and numpy)
+
+PS C:\Users\jtgal> ls
+
+
+
+
+
+    Directory: C:\Users\jtgal
+
+
+
+
+
+Mode                 LastWriteTime         Length Name
+
+----                 -------------         ------ ----
+
+d-----          9/1/2026  11:42 AM                .anaconda
+
+d-----          4/3/2026   3:46 PM                .arduinoIDE
+
+d-----          9/3/2026  11:34 AM                .conda
+
+d-----          9/1/2026  11:50 AM                .continuum
+
+d-----         8/26/2026  11:09 AM                .copilot
+
+d-----          1/8/2025   3:19 PM                .dotnet
+
+d-----         1/20/2026   3:10 PM                .GMA
+
+d-----          9/3/2026  11:48 AM                .ipython
+
+d-----         9/29/2026  12:02 PM                .local
+
+d-----         8/20/2022  12:24 AM                .QtWebEngineProcess
+
+d-----         9/10/2026  11:19 AM                .ssh
+
+d-----         8/26/2026  11:08 AM                .vscode
+
+d-----         8/26/2026  11:07 AM                .vscode-shared
+
+d-r---         1/16/2021   9:24 PM                3D Objects
+
+d-----         9/10/2026  12:29 PM                anaconda3
+
+d-r---         1/16/2021   9:24 PM                Contacts
+
+d-----         9/10/2026  11:37 AM                DataScience805_Project
+
+d-----         1/16/2021   9:26 PM                Documents
+
+d-r---         10/4/2026   9:10 PM                Downloads
+
+d-r---        11/16/2021   9:41 PM                Favorites
+
+d-----         9/18/2022   4:46 PM                Intel
+
+d-r---         1/16/2021   9:24 PM                Links
+
+d-r---          6/5/2023  11:23 PM                Music
+
+d-----         9/28/2026  11:58 PM                OEAS805
+
+d-----         10/4/2026   9:03 PM                OEAS805_Project
+
+dar--l          5/8/2026   3:36 PM                OneDrive
+
+d-r---         1/16/2021   9:24 PM                Saved Games
+
+d-r---         1/16/2021   9:25 PM                Searches
+
+d-r---         6/24/2024  11:48 PM                Videos
+
+d-----         9/25/2026  10:11 PM                Zotero
+
+-a----         1/20/2026   3:10 PM             21 .geomapapp-home
+
+-a----         8/27/2026  11:46 AM             61 .gitconfig
+
+-a----         8/28/2026  10:16 AM             26 .lesshst
+
+-a----         9/28/2026  11:47 PM            803 .viminfo
+
+-a----         7/19/2026  11:00 PM            331 BullseyeCoverageError.txt
+
+
+
+
+
+PS C:\Users\jtgal> cd OEAS805_Project
+
+PS C:\Users\jtgal\OEAS805_Project> ls
+
+
+
+
+
+    Directory: C:\Users\jtgal\OEAS805_Project
+
+
+
+
+
+Mode                 LastWriteTime         Length Name
+
+----                 -------------         ------ ----
+
+d-----         10/4/2026   9:45 PM                CODE
+
+d-----         10/4/2026   9:39 PM                DATA
+
+-a----         10/4/2026   9:40 PM           1711 README.md
+
+
+
+
+
+PS C:\Users\jtgal\OEAS805_Project> cd CODE
+
+PS C:\Users\jtgal\OEAS805_Project\CODE> ls
+
+
+
+
+
+    Directory: C:\Users\jtgal\OEAS805_Project\CODE
+
+
+
+
+
+Mode                 LastWriteTime         Length Name
+
+----                 -------------         ------ ----
+
+-a----         10/4/2026   9:45 PM            272 ECS_O2_Flux_Visualization.ipynb
+
+
+
+
+
+PS C:\Users\jtgal\OEAS805_Project\CODE> code ECS_O2_Flux_Visualization.ipynb
+
+PS C:\Users\jtgal\OEAS805_Project\CODE> cd ..
+
+PS C:\Users\jtgal\OEAS805_Project>
+
+It looks like you've navigated to your OEAS805_Project folder, checked the CODE directory, and opened your Jupyter Notebook (ECS_O2_Flux_Visualization.ipynb) in VS Code.
+
+How can I help you with your project today? For example, are you working on writing data processing scripts, troubleshooting a visualization, or analyzing your oxygen flux data?
+
+I want to add an environment to the OEAS805_Project folder. I want this environment to have the packages pandas, matplotlib.pyplot, cartopy, and seaborn, numpy in it. I also want to create both a .txt and .yml outlining the enviornment after
+
+To create a dedicated Conda environment for your project with those packages and export it to both .txt and .yml formats, run the following commands in your PowerShell terminal:
+
+1. Create and Activate the Environment
+First, create a new Conda environment named oeas805 (or whatever name you prefer) and install all the requested packages at once:
+
+PowerShell
+conda create -n oeas805 pandas matplotlib cartopy seaborn numpy -y
+conda activate oeas805
+Verify: Run conda env list to confirm your new environment appears in the list, and that an asterisk (*) is next to it indicating it is active.
+
+2. Export to .yml and .txt Formats
+Once your environment is active, you can export the configuration files:
+
+Export to YAML (environment.yml):
+
+PowerShell
+conda env export > environment.yml
+(If you only want the explicitly installed packages without build numbers, use conda env export --no-builds > environment.yml)
+
+Export to TXT (requirements.txt):
+
+PowerShell
+pip freeze > requirements.txt
+Verify: Run ls in your project folder to ensure both environment.yml and requirements.txt have been created successfully.
+
+What would you like to do next?
+
+Register kernel for Jupyter
+
+Write setup script
+
+
+
+Gemini is AI and can make mistakes.
