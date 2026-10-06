@@ -312,3 +312,126 @@ print(...) statements: Output diagnostic summaries showing active time, total es
 
 
 Gemini is AI and can make mistakes.
+
+
+
+
+PUSHING THE FILES TO GITHUB WITH LARGE DATA FILES
+
+
+PS C:\Users\jtgal\OEAS805_Project> git rm --cached DATA.zip
+
+rm 'DATA.zip'
+
+PS C:\Users\jtgal\OEAS805_Project> git status
+
+On branch main
+
+Your branch is ahead of 'origin/main' by 2 commits.
+
+  (use "git push" to publish your local commits)
+
+
+
+Changes to be committed:
+
+  (use "git restore --staged <file>..." to unstage)
+
+        deleted:    DATA.zip
+
+
+
+Untracked files:
+
+  (use "git add <file>..." to include in what will be committed)
+
+        DATA.zip
+
+
+
+PS C:\Users\jtgal\OEAS805_Project> git add .gitignore
+
+PS C:\Users\jtgal\OEAS805_Project> git commit --amend -m "Update gitignore configuration and exclude DATA.zip"
+
+[main a7597d6] Update gitignore configuration and exclude DATA.zip
+
+ Date: Tue Oct 6 00:20:08 2026 -0400
+
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+
+ delete mode 100644 DATA.zip
+
+PS C:\Users\jtgal\OEAS805_Project> git push origin main
+
+Enumerating objects: 20, done.
+
+Counting objects: 100% (20/20), done.
+
+Delta compression using up to 4 threads
+
+Compressing objects: 100% (13/13), done.
+
+Writing objects: 100% (15/15), 349.87 MiB | 19.36 MiB/s, done.
+
+Total 15 (delta 2), reused 0 (delta 0), pack-reused 0 (from 0)
+
+remote: Resolving deltas: 100% (2/2), completed with 1 local object.
+
+remote: error: Trace: c2f5a0279ac177e7ee2130d53d050e4a8f6bc616a9b881afcfa78f90f60681eb
+
+remote: error: See https://gh.io/lfs for more information.
+
+remote: error: File DATA.zip is 354.62 MB; this exceeds GitHub's file size limit of 100.00 MB
+
+remote: error: GH001: Large files detected. You may want to try Git Large File Storage - https://git-lfs.github.com.
+
+To https://github.com/jacobtgallaher/ECS-Visualizing.git
+
+ ! [remote rejected] main -> main (pre-receive hook declined)
+
+error: failed to push some refs to 'https://github.com/jacobtgallaher/ECS-Visualizing.git'
+
+PS C:\Users\jtgal\OEAS805_Project>
+
+Even though you removed DATA.zip from your latest commit, the file still exists in your older Git history (specifically in the previous commit that your current branch is built on). Because GitHub scans the entire history of what you are pushing, it still catches the large file in that older commit.
+
+To completely remove DATA.zip from your entire Git history so you can push successfully, follow these steps:
+
+1
+Reset your branch back before the commits
+2 min
+Reset your branch to the state before you made those two local commits, keeping your current file changes intact:
+
+Bash
+git reset --soft HEAD~2
+Verification: Run git status to make sure your changes are still staged or modified locally.
+
+2
+Ensure DATA.zip is in .gitignore
+1 min
+Open your .gitignore file and verify that DATA.zip is explicitly written on its own line.
+Verification: Run git status and confirm that DATA.zip now appears under Untracked files (or doesn't appear at all if successfully ignored).
+
+3
+Commit clean and push
+2 min
+Stage your files (excluding the ignored zip file), make a fresh commit, and push:
+
+Bash
+git add .gitignore
+git commit -m "Update gitignore and exclude DATA.zip"
+git push origin main
+Verification: The push should complete successfully without any size limit errors from GitHub.
+
+Important Note on git reset
+Using git reset --soft HEAD~2 safely keeps all your file edits on your computer while wiping out the last two problematic commits from your history.
+
+What would you like to do next?
+
+Verify git history
+
+Learn about Git LFS
+
+
+
+Gemini is AI and can make mistakes.
