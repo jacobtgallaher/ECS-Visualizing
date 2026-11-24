@@ -435,3 +435,518 @@ Learn about Git LFS
 
 
 Gemini is AI and can make mistakes.
+
+
+
+
+COMBINING TWO PIECES OF CODE TO SET LIMITS ON THE TIME THAT THE PLOTS SHOW
+
+deployment_start = pd.Timestamp("2026-08-14 11:00:00")
+
+deployment_end = pd.Timestamp("2026-08-18 00:00:00")
+
+
+
+vector_ax.set_xlim(deployment_start, deployment_end)
+
+vector_ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+
+vector_ax.xaxis.set_major_formatter(
+
+mdates.ConciseDateFormatter(vector_ax.xaxis.get_major_locator())
+
+)
+
+
+
+fig_direction.tight_layout()
+
+fig_direction.savefig(
+
+output_dir / "20_Minute_Current_Direction_Magnitude.png",
+
+dpi=300,
+
+bbox_inches="tight",
+
+)
+
+plt.show()
+
+It looks like you are sharing a snippet for plotting oceanographic or time-series data using Pandas and Matplotlib.
+
+There is a subtle bug in your date formatter setup: vector_ax.xaxis.set_major_locator(...) returns None, which will cause a TypeError when passed directly into mdates.ConciseDateFormatter(...).
+
+To fix this, you need to store the locator instance in a variable first so it can be shared between the axis and the formatter:
+
+Python
+import matplotlib.dates as matplotlib_dates  # or mdates
+import pandas as pd
+import matplotlib.pyplot as plt
+
+deployment_start = pd.Timestamp("2026-08-14 11:00:00")
+deployment_end = pd.Timestamp("2026-08-18 00:00:00")
+
+vector_ax.set_xlim(deployment_start, deployment_end)
+
+# 1. Create and assign the locator
+locator = mdates.AutoDateLocator()
+vector_ax.xaxis.set_major_locator(locator)
+
+# 2. Pass the locator instance to the formatter
+vector_ax.xaxis.set_major_formatter(
+    mdates.ConciseDateFormatter(locator)
+)
+
+fig_direction.tight_layout()
+fig_direction.savefig(
+    output_dir / "20_Minute_Current_Direction_Magnitude.png",
+    dpi=300,
+    bbox_inches="tight",
+)
+plt.show()
+# Progressive vector plot using east and north velocity components
+
+sampling_rate = 16 # Hz
+
+
+
+# 20-minute averages and progressive vector plot of east/north currents
+
+velocity_pvp = data[
+
+["Timestamp", "Velocity1 (X|East)(m/s)", "Velocity2 (Y|North)(m/s)"]
+
+].copy()
+
+
+
+velocity_pvp["Timestamp"] = pd.to_datetime(velocity_pvp["Timestamp"])
+
+velocity_pvp = velocity_pvp.dropna(subset=["Timestamp"]).sort_values("Timestamp")
+
+velocity_pvp = velocity_pvp.set_index("Timestamp")
+
+
+
+# 20-minute mean east and north velocities
+
+mean_20min = velocity_pvp.resample("20min").mean().dropna()
+
+
+
+east_velocity = mean_20min["Velocity1 (X|East)(m/s)"]
+
+north_velocity = mean_20min["Velocity2 (Y|North)(m/s)"]
+
+
+
+# Net magnitude: c = sqrt(a^2 + b^2)
+
+net_speed = np.sqrt(north_velocity**2 + east_velocity**2)
+
+
+
+# Net direction in degrees, measured counterclockwise from east
+
+direction = np.rad2deg(np.arctan2(north_velocity, east_velocity))
+
+
+
+# Convert 20-minute mean velocities to displacement
+
+dt = 20 * 60 # seconds
+
+east_displacement = (east_velocity * dt).cumsum()
+
+north_displacement = (north_velocity * dt).cumsum()
+
+
+
+# 20-minute current direction and magnitude
+
+x_dates = mdates.date2num(net_speed.index)
+
+
+
+fig_direction, vector_ax = plt.subplots(figsize=(12, 5))
+
+
+
+vector_ax.axhline(0, color="black", linewidth=0.8, alpha=0.5)
+
+
+
+current_arrows = vector_ax.quiver(
+
+x_dates,
+
+np.zeros(len(x_dates)),
+
+east_velocity.values,
+
+north_velocity.values,
+
+angles="uv",
+
+scale_units="inches",
+
+scale=0.10,
+
+width=0.002,
+
+color="tab:red",
+
+alpha=0.85,
+
+)
+
+
+
+vector_ax.set(
+
+title="20-Minute Current Direction and Magnitude",
+
+xlabel="Date and Time",
+
+ylabel="Velocity (m/s)",
+
+)
+
+vector_ax.grid(True, alpha=0.3)
+
+vector_ax.set_xlim(x_dates.min(), x_dates.max())
+
+
+
+maximum_speed = net_speed.max()
+
+vector_ax.quiverkey(
+
+current_arrows,
+
+X=0.92,
+
+Y=1.05,
+
+U=maximum_speed,
+
+label=f"{maximum_speed:.2f} m/s",
+
+labelpos="E",
+
+)
+
+
+
+vector_ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+
+vector_ax.xaxis.set_major_formatter(
+
+mdates.ConciseDateFormatter(vector_ax.xaxis.get_major_locator())
+
+)
+
+
+
+component_limit = max(
+
+abs(east_velocity).max(),
+
+abs(north_velocity).max(),
+
+)
+
+vector_ax.set_ylim(-1.25 * component_limit, 1.25 * component_limit)
+
+
+
+fig_direction.tight_layout()
+
+plt.show()
+
+
+
+output_dir.mkdir(exist_ok=True)
+
+fig_direction.savefig(
+
+output_dir / "20_Minute_Current_Direction_Magnitude.png",
+
+dpi=300,
+
+bbox_inches="tight",
+
+)
+
+Now that I can see the full script, a couple of important details stand out regarding how the plot is structured and what the code is attempting to calculate:
+
+1. Progressive Vector Diagram (PVD) vs. Time-Series Quiver Plot
+The Mismatch: Your comment states # Progressive vector plot using east and north velocity components, and you correctly calculate cumulative displacements (east_displacement and north_displacement). However, your quiver call passes the raw velocities (east_velocity, north_velocity) over time (x_dates on the X-axis, 0 on the Y-axis).
+
+What this means:
+
+If you want a True Progressive Vector Diagram (PVD), the X-axis should be East Displacement and the Y-axis should be North Displacement to show the actual geographic trajectory of a water parcel over time.
+
+If you want a Current Vector Time Series / Stick Plot (velocities over time), you don't need east_displacement and north_displacement.
+
+2. Date Limits Overwrite
+You set vector_ax.set_xlim(deployment_start, deployment_end) near the top, but later down you call vector_ax.set_xlim(x_dates.min(), x_dates.max()), which overwrites your initial time bounds. If you want to force the plot to span your exact deployment window (even if there are slight data padding differences), you should keep deployment_start and deployment_end.
+
+Option A: If you want a True Progressive Vector Diagram (PVD)
+If your goal is a spatial trajectory plot where X is East displacement and Y is North displacement:
+
+Python
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+sampling_rate = 16  # Hz
+
+# Load and prepare data
+velocity_pvp = data[
+    ["Timestamp", "Velocity1 (X|East)(m/s)", "Velocity2 (Y|North)(m/s)"]
+].copy()
+
+velocity_pvp["Timestamp"] = pd.to_datetime(velocity_pvp["Timestamp"])
+velocity_pvp = velocity_pvp.dropna(subset=["Timestamp"]).sort_values("Timestamp")
+velocity_pvp = velocity_pvp.set_index("Timestamp")
+
+# 20-minute mean east and north velocities
+mean_20min = velocity_pvp.resample("20min").mean().dropna()
+
+east_velocity = mean_20min["Velocity1 (X|East)(m/s)"]
+north_velocity = mean_20min["Velocity2 (Y|North)(m/s)"]
+
+# Convert 20-minute mean velocities to displacement (meters)
+dt = 20 * 60  # seconds
+east_displacement = (east_velocity * dt).cumsum()
+north_displacement = (north_velocity * dt).cumsum()
+
+# Plotting Progressive Vector Diagram
+fig_pvd, pvd_ax = plt.subplots(figsize=(8, 8))
+
+pvd_ax.plot(
+    east_displacement,
+    north_displacement,
+    color="tab:blue",
+    lw=1.5,
+    label="Trajectory",
+)
+pvd_ax.scatter(
+    east_displacement.iloc[0],
+    north_displacement.iloc[0],
+    color="green",
+    s=50,
+    zorder=5,
+    label="Start",
+)
+pvd_ax.scatter(
+    east_displacement.iloc[-1],
+    north_displacement.iloc[-1],
+    color="red",
+    s=50,
+    zorder=5,
+    label="End",
+)
+
+pvd_ax.set(
+    title="Progressive Vector Diagram (PVD)",
+    xlabel="East Displacement (m)",
+    ylabel="North Displacement (m)",
+)
+pvd_ax.grid(True, alpha=0.3)
+pvd_ax.set_aspect("equal", adjustable="datalim")
+pvd_ax.legend()
+
+fig_pvd.tight_layout()
+
+output_dir.mkdir(exist_ok=True)
+fig_pvd.savefig(
+    output_dir / "Progressive_Vector_Diagram.png",
+    dpi=300,
+    bbox_inches="tight",
+)
+plt.show()
+Option B: If you want the Time-Series Vector / Stick Plot
+If you prefer to keep the time-series approach (arrows plotted along a timeline at 
+y
+=
+0
+y=0), here is the cleaned code with the date locator/formatter fixed and your deployment bounds properly enforced:
+
+Python
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+sampling_rate = 16  # Hz
+
+# 20-minute averages of east/north currents
+velocity_pvp = data[
+    ["Timestamp", "Velocity1 (X|East)(m/s)", "Velocity2 (Y|North)(m/s)"]
+].copy()
+
+velocity_pvp["Timestamp"] = pd.to_datetime(velocity_pvp["Timestamp"])
+velocity_pvp = velocity_pvp.dropna(subset=["Timestamp"]).sort_values("Timestamp")
+velocity_pvp = velocity_pvp.set_index("Timestamp")
+
+mean_20min = velocity_pvp.resample("20min").mean().dropna()
+
+east_velocity = mean_20min["Velocity1 (X|East)(m/s)"]
+north_velocity = mean_20min["Velocity2 (Y|North)(m/s)"]
+
+# Net magnitude and direction
+net_speed = np.sqrt(north_velocity**2 + east_velocity**2)
+direction = np.rad2deg(np.arctan2(north_velocity, east_velocity))
+
+x_dates = mdates.date2num(net_speed.index)
+
+fig_direction, vector_ax = plt.subplots(figsize=(12, 5))
+
+vector_ax.axhline(0, color="black", linewidth=0.8, alpha=0.5)
+
+current_arrows = vector_ax.quiver(
+    x_dates,
+    np.zeros(len(x_dates)),
+    east_velocity.values,
+    north_velocity.values,
+    angles="uv",
+    scale_units="inches",
+    scale=0.10,
+    width=0.002,
+    color="tab:red",
+    alpha=0.85,
+)
+
+vector_ax.set(
+    title="20-Minute Current Direction and Magnitude",
+    xlabel="Date and Time",
+    ylabel="Velocity (m/s)",
+)
+vector_ax.grid(True, alpha=0.3)
+
+# Enforce your deployment window bounds
+deployment_start = pd.Timestamp("2026-08-14 11:00:00")
+deployment_end = pd.Timestamp("2026-08-18 00:00:00")
+vector_ax.set_xlim(deployment_start, deployment_end)
+
+maximum_speed = net_speed.max()
+vector_ax.quiverkey(
+    current_arrows,
+    X=0.92,
+    Y=1.05,
+    U=maximum_speed,
+    label=f"{maximum_speed:.2f} m/s",
+    labelpos="E",
+)
+
+# Fix date locator and formatter setup
+locator = mdates.AutoDateLocator()
+vector_ax.xaxis.set_major_locator(locator)
+vector_ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+
+component_limit = max(
+    abs(east_velocity).max(),
+    abs(north_velocity).max(),
+)
+vector_ax.set_ylim(-1.25 * component_limit, 1.25 * component_limit)
+
+fig_direction.tight_layout()
+
+output_dir.mkdir(exist_ok=True)
+fig_direction.savefig(
+    output_dir / "20_Minute_Current_Direction_Magnitude.png",
+    dpi=300,
+    bbox_inches="tight",
+)
+plt.show()
+combine these two codes to be succinct
+
+Here is the combined, succinct version of your script. It merges the data processing steps cleanly, removes redundant variable definitions, keeps the date locator fix, and maintains your deployment bounds and output saving:
+
+Python
+import matplotlib.dates as mdates
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+
+# 1. Load and resample data (20-minute means)
+velocity_pvp = data[
+    ["Timestamp", "Velocity1 (X|East)(m/s)", "Velocity2 (Y|North)(m/s)"]
+].copy()
+velocity_pvp["Timestamp"] = pd.to_datetime(velocity_pvp["Timestamp"])
+mean_20min = (
+    velocity_pvp.dropna(subset=["Timestamp"])
+    .sort_values("Timestamp")
+    .set_index("Timestamp")
+    .resample("20min")
+    .mean()
+    .dropna()
+)
+
+east = mean_20min["Velocity1 (X|East)(m/s)"]
+north = mean_20min["Velocity2 (Y|North)(m/s)"]
+net_speed = np.sqrt(east**2 + north**2)
+x_dates = mdates.date2num(net_speed.index)
+
+# 2. Plotting
+fig_direction, vector_ax = plt.subplots(figsize=(12, 5))
+vector_ax.axhline(0, color="black", linewidth=0.8, alpha=0.5)
+
+current_arrows = vector_ax.quiver(
+    x_dates,
+    np.zeros(len(x_dates)),
+    east.values,
+    north.values,
+    angles="uv",
+    scale_units="inches",
+    scale=0.10,
+    width=0.002,
+    color="tab:red",
+    alpha=0.85,
+)
+
+# Axis configuration & deployment limits
+vector_ax.set(
+    title="20-Minute Current Direction and Magnitude",
+    xlabel="Date and Time",
+    ylabel="Velocity (m/s)",
+)
+vector_ax.grid(True, alpha=0.3)
+vector_ax.set_xlim(
+    pd.Timestamp("2026-08-14 11:00:00"), pd.Timestamp("2026-08-18 00:00:00")
+)
+
+limit = max(abs(east).max(), abs(north).max())
+vector_ax.set_ylim(-1.25 * limit, 1.25 * limit)
+
+vector_ax.quiverkey(
+    current_arrows,
+    X=0.92,
+    Y=1.05,
+    U=net_speed.max(),
+    label=f"{net_speed.max():.2f} m/s",
+    labelpos="E",
+)
+
+# Date formatting fix
+locator = mdates.AutoDateLocator()
+vector_ax.xaxis.set_major_locator(locator)
+vector_ax.xaxis.set_major_formatter(mdates.ConciseDateFormatter(locator))
+
+# Save and show
+output_dir.mkdir(exist_ok=True)
+fig_direction.tight_layout()
+fig_direction.savefig(
+    output_dir / "20_Minute_Current_Direction_Magnitude.png",
+    dpi=300,
+    bbox_inches="tight",
+)
+plt.show()
+
+
+
+
+Gemini is AI and can make mistakes.
